@@ -1,8 +1,7 @@
 package playground.jkzhou.filetransfer;
 
-import android.net.wifi.WifiInfo;
-import android.net.wifi.WifiManager;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.NavigationView;
 import android.support.design.widget.Snackbar;
@@ -11,21 +10,22 @@ import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.text.format.Formatter;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 
-import org.eclipse.jetty.server.Server;
-
-import playground.jkzhou.filetransfer.server.WebHandler;
+import playground.jkzhou.filetransfer.server.ServerStarter;
+import playground.jkzhou.filetransfer.server.SparkStarter;
 
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
 
     private static final String TAG = "MainActivity";
+
+    private ServerStarter serverStarter;
+    private SparkStarter sparkStarter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -34,47 +34,39 @@ public class MainActivity extends AppCompatActivity
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
+        final FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(final View view) {
-                new Thread(new Runnable() {
-                    @Override
-                    public void run() {
-                        Server server = new Server(8080);
-                        server.setHandler(new WebHandler());
-                        WifiManager wifiMgr = (WifiManager) getSystemService(WIFI_SERVICE);
-                        WifiInfo wifiInfo = wifiMgr.getConnectionInfo();
-                        final String ip = Formatter.formatIpAddress(wifiInfo.getIpAddress());
-                        try {
-                            Log.d(TAG, "run: Server about to start");
-                            server.start();
-                            Log.d(TAG, "run: Server has started: " + ip);
-                            view.post(new Runnable() {
-                                @Override
-                                public void run() {
-                                    Snackbar.make(view, "Server is up: " + ip, Snackbar.LENGTH_LONG)
-                                            .setAction("Action", null).show();
-                                }
-                            });
-                            server.join();
-                            Log.d(TAG, "run: Server has joined");
-                        } catch (Exception e) {
-                            Log.e(TAG, "run: Server has error", e);
-                        }
-                    }
-                }).start();
+                if (sparkStarter == null)
+                    sparkStarter = new SparkStarter();
+                sparkStarter.start();
             }
         });
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
                 this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
-        drawer.setDrawerListener(toggle);
+        drawer.addDrawerListener(toggle);
         toggle.syncState();
 
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
+    }
+
+    private void startServer(final View view) {
+        if (serverStarter == null) {
+            serverStarter = new ServerStarter(MainActivity.this, view);
+        }
+        serverStarter.setPostStartAction(new Runnable() {
+            @Override
+            public void run() {
+                Snackbar.make(view, "Server is up: " + serverStarter.getHostAddress(), Snackbar.LENGTH_LONG)
+                        .setAction("Action", null).show();
+            }
+        });
+        serverStarter.start();
+        Log.d(TAG, "onClick: fired server start");
     }
 
     @Override
@@ -111,7 +103,7 @@ public class MainActivity extends AppCompatActivity
 
     @SuppressWarnings("StatementWithEmptyBody")
     @Override
-    public boolean onNavigationItemSelected(MenuItem item) {
+    public boolean onNavigationItemSelected(@NonNull MenuItem item) {
         // Handle navigation view item clicks here.
         int id = item.getItemId();
 

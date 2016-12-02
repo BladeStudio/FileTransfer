@@ -30,7 +30,7 @@ build/
 *.iml
 .idea/workspace.xml
 .idea/tasks.xml
-.idea/libraries
+# .idea/libraries
 
 # Local configuration file (sdk path, etc)
 local.properties

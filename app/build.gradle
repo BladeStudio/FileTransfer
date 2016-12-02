@@ -34,9 +34,8 @@ dependencies {
     testCompile 'junit:junit:4.12'
     compile files('libs/javax.servlet-api-3.1.0.jar')
     compile files('libs/jetty-all-9.2.19.v20160908.jar')
-    // https://mvnrepository.com/artifact/com.sparkjava/spark-core
-    //compile 'com.sparkjava:spark-core:1.1.1'
     // https://mvnrepository.com/artifact/org.slf4j/slf4j-api
     compile 'org.slf4j:slf4j-api:1.7.21'
     compile files('libs/spark-core-1.1.2.jar')
+    compile files('libs/spark-template-jade-1.0.0.jar')
 }

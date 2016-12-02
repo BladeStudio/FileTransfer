@@ -1,0 +1,13 @@
+<component name="libraryTable">
+    <library name="spark-core-1.1.2">
+        <CLASSES>
+            <root url="jar://$PROJECT_DIR$/app/libs/spark-core-1.1.2.jar!/" />
+        </CLASSES>
+        <JAVADOC>
+            <root url="jar://$PROJECT_DIR$/../../JAVA/spark-1.1.2/spark-core-1.1.2-javadoc.jar!/" />
+        </JAVADOC>
+        <SOURCES>
+            <root url="jar://$PROJECT_DIR$/../../JAVA/spark-1.1.2/spark-core-1.1.2-sources.jar!/" />
+        </SOURCES>
+    </library>
+</component>

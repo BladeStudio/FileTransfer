@@ -34,12 +34,15 @@ public class MainActivity extends AppCompatActivity
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
+        sparkStarter = new SparkStarter(this);
+        sparkStarter.init();
+
         final FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(final View view) {
-                if (sparkStarter == null)
-                    sparkStarter = new SparkStarter();
+//                if (sparkStarter == null)
+//                    sparkStarter = new SparkStarter(MainActivity.this);
                 sparkStarter.start();
             }
         });

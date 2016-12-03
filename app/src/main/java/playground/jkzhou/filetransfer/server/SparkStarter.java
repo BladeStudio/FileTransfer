@@ -1,8 +1,20 @@
 package playground.jkzhou.filetransfer.server;
 
-import static spark.Spark.*;
+import android.content.Context;
+import android.content.res.AssetManager;
+import android.os.Environment;
+import android.util.Log;
 
-import spark.*;
+import java.io.IOException;
+
+import playground.jkzhou.filetransfer.utils.AppUtils;
+import spark.Request;
+import spark.Response;
+import spark.Route;
+
+import static spark.Spark.externalStaticFileLocation;
+import static spark.Spark.get;
+import static spark.Spark.post;
 
 /**
  * Created by JK.Zhou on 2016/11/30.
@@ -10,10 +22,53 @@ import spark.*;
 
 public class SparkStarter {
 
+    private static final String TAG = "SparkStarter";
+    private static final String PATH_SYS_BASE = Environment.getExternalStorageDirectory().toString() + "/Android/Data/";
+    private static final String PATH_APP_BASE = PATH_SYS_BASE + "playground.jkzhou/webdata";
+    private Context appContext;
+    private String appBaseDir;
+
+    public SparkStarter(Context appContext) {
+        this.appContext = appContext;
+        this.appBaseDir = appContext.getExternalCacheDir().getAbsolutePath().toString();
+    }
+
+    public void init() {
+
+        try {
+            deployWebContent();
+            externalStaticFileLocation(PATH_APP_BASE);
+        } catch (IOException e) {
+            Log.e(TAG, "init: deployWebContent FAILED: ", e);
+        }
+
+    }
+
+    private void displayFiles(AssetManager mgr, String path) {
+        try {
+            String list[] = mgr.list(path);
+            if (list != null)
+                for (int i = 0; i < list.length; ++i) {
+                    Log.d("Assets:", path + "/" + list[i]);
+                    displayFiles(mgr, path + "/" + list[i]);
+                }
+        } catch (IOException e) {
+            Log.e("List error:", "can't list" + path);
+        }
+    }
+
+    private boolean deployWebContent() throws IOException {
+
+        AppUtils.copyAssets(appContext, "WebContent", "web");
+
+        return true;
+    }
+
     private Runnable getHandler() {
         return new Runnable() {
             @Override
             public void run() {
+
                 get(new Route("/hello") {
                     @Override
                     public Object handle(Request request, Response response) {

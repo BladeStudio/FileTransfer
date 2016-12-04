@@ -4,18 +4,15 @@ import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.NavigationView;
-import android.support.design.widget.Snackbar;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 
-import playground.jkzhou.filetransfer.server.ServerStarter;
 import playground.jkzhou.filetransfer.server.SparkStarter;
 
 
@@ -24,7 +21,6 @@ public class MainActivity extends AppCompatActivity
 
     private static final String TAG = "MainActivity";
 
-    private ServerStarter serverStarter;
     private SparkStarter sparkStarter;
 
     @Override
@@ -41,8 +37,6 @@ public class MainActivity extends AppCompatActivity
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(final View view) {
-//                if (sparkStarter == null)
-//                    sparkStarter = new SparkStarter(MainActivity.this);
                 sparkStarter.start();
             }
         });
@@ -55,21 +49,6 @@ public class MainActivity extends AppCompatActivity
 
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
-    }
-
-    private void startServer(final View view) {
-        if (serverStarter == null) {
-            serverStarter = new ServerStarter(MainActivity.this, view);
-        }
-        serverStarter.setPostStartAction(new Runnable() {
-            @Override
-            public void run() {
-                Snackbar.make(view, "Server is up: " + serverStarter.getHostAddress(), Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
-            }
-        });
-        serverStarter.start();
-        Log.d(TAG, "onClick: fired server start");
     }
 
     @Override

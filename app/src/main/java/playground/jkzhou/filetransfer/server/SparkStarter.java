@@ -56,7 +56,14 @@ public class SparkStarter {
             @Override
             public void run() {
 
-                AppUtils.acquireHostInfo();
+                //AppUtils.acquireHostInfo();
+                get(new Route("/") {
+                    @Override
+                    public Object handle(Request request, Response response) throws Exception {
+                        response.redirect("app.html");
+                        return null;
+                    }
+                });
 
                 get(new Route("/hello") {
                     @Override

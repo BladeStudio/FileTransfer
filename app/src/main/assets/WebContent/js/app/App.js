@@ -14,7 +14,24 @@
  *      PLACE HOLDER TEXT PLACE HOLDER TEXT PLACE HOLDER TEXT PLACE HOLDER TEXT
  */
 
-body{
-    position: relative;
-    font-family: arial, sans-serif;
-}
+define([
+    'jquery',
+	'jqm',
+    'underscore',
+    'backbone',
+	'router',
+], function($, jqm, _, Backbone, AppRouter) {
+
+    var applyStyles = function () {
+        $('a.app-btn').addClass("ui-btn ui-btn-inline ui-corner-all ui-shadow");
+    };
+
+    return {
+        initialize: function() {
+            // Pass in our Router module and call it's initialize function
+    		AppRouter.initialize();
+            console.log("Dependencies loaded");
+            applyStyles();
+        },
+    };
+});

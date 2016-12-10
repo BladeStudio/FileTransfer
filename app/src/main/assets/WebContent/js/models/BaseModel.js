@@ -14,7 +14,16 @@
  *      PLACE HOLDER TEXT PLACE HOLDER TEXT PLACE HOLDER TEXT PLACE HOLDER TEXT
  */
 
-body{
-    position: relative;
-    font-family: arial, sans-serif;
-}
+define([
+    'backbone'
+], function(Backbone) {
+
+    var BaseModel = Backbone.Model.extend({
+
+        urlRoot: "/main"
+
+    });
+
+    return BaseModel;
+
+});

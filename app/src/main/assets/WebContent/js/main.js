@@ -14,7 +14,23 @@
  *      PLACE HOLDER TEXT PLACE HOLDER TEXT PLACE HOLDER TEXT PLACE HOLDER TEXT
  */
 
-body{
-    position: relative;
-    font-family: arial, sans-serif;
-}
+require.config({
+    paths: {
+        jquery: 'libs/jquery-2.2.4.min',
+        jqm: 'libs/jquery.mobile-1.4.5.min',
+        underscore: 'libs/underscore-min',
+        backbone: 'libs/backbone-min',
+        app: 'app/App',
+        router: 'app/AppRouter'
+    }
+
+});
+
+require([
+    'app',
+
+], function(App) {
+    // The "app" dependency is passed in as "App"
+    // Again, the other dependencies passed in are not "AMD" therefore don't pass a parameter to this function
+    App.initialize();
+});

@@ -9,8 +9,6 @@ import org.apache.commons.io.FileUtils;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.util.Locale;
 
 import static android.content.Context.WIFI_SERVICE;
@@ -36,40 +34,20 @@ public class AppUtils {
         }
     }
 
-    public static boolean deleteDir(File dir) {
+    private static boolean deleteDir(File dir) {
         if (dir != null && dir.isDirectory()) {
-            String[] children = dir.list();
-            for (int i = 0; i < children.length; i++) {
-                boolean success = deleteDir(new File(dir, children[i]));
+            String[] subPaths = dir.list();
+            for (String subPath : subPaths) {
+                boolean success = deleteDir(new File(dir, subPath));
                 if (!success) {
                     return false;
                 }
             }
+            // The directory is now empty so delete it
+            return dir.delete();
         }
 
-        // The directory is now empty so delete it
-        return dir.delete();
-    }
-
-    public static String[] acquireHostInfo() {
-        /*
-        * NOTE: DO NOT invoke this method from a MAIN thread, otherwise you would get an
-        * android.os.NetworkOnMainThreadException, because performing network operations
-        * on a main thread is discouraged by Android, its better to do it on other thread
-        * or use AsyncTask.
-        */
-        String[] result = new String[2];
-        InetAddress net;
-        try {
-            net = InetAddress.getLocalHost();
-        } catch (UnknownHostException e) {
-            Log.e(TAG, "acquireHostInfo: Failed to access local host", e);
-            return result;
-        }
-        result[0] = net.getHostName();
-        result[1] = net.getHostAddress();
-        Log.d(TAG, "acquireHostInfo: Host Name:" + result[0] + ",\tHost Address:" + result[1]);
-        return result;
+        return false;
     }
 
     public static String formatIPv4(int ip) {

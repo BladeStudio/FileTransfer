@@ -1,19 +1,11 @@
 package playground.jkzhou.filetransfer.server;
 
-import android.content.Context;
 import android.util.Log;
-
-import java.io.File;
-import java.io.IOException;
 
 import spark.Request;
 import spark.Response;
 import spark.Route;
-import playground.jkzhou.filetransfer.utils.AppUtils;
-
-import static spark.Spark.externalStaticFileLocation;
-import static spark.Spark.get;
-import static spark.Spark.post;
+import spark.Spark;
 
 /**
  * Created by JK.Zhou on 2016/11/30.
@@ -24,31 +16,17 @@ public class SparkStarter {
     public static final String WEB_BASE_DIR = "WebContent";
 
     private static final String TAG = "SparkStarter";
-    private Context appContext;
+    private boolean mStarted;
 
-    public SparkStarter(Context appContext) {
-        this.appContext = appContext;
+    private SparkStarter() {
     }
 
-    public void init() {
-        Log.d(TAG, "init: Host IP Address:" + AppUtils.getDeviceWifiIP(appContext));
-
-        try {
-            AppUtils.listAssets(appContext, WEB_BASE_DIR);
-            deployWebContent();
-        } catch (IOException e) {
-            Log.e(TAG, "init: deployWebContent FAILED: ", e);
-        }
-
+    public static SparkStarter getInstance() {
+        return SingletonHolder.INSTANCE;
     }
 
-    private boolean deployWebContent() throws IOException {
-
-        AppUtils.copyAssets(appContext, WEB_BASE_DIR, WEB_BASE_DIR);
-
-        externalStaticFileLocation(AppUtils.getCacheDir(appContext) + File.separator + WEB_BASE_DIR);
-
-        return true;
+    public void setStaticFileLocation(String absPath) {
+        Spark.externalStaticFileLocation(absPath);
     }
 
     private Runnable getHandler() {
@@ -56,7 +34,7 @@ public class SparkStarter {
             @Override
             public void run() {
 
-                get(new Route("/") {
+                Spark.get(new Route("/") {
                     @Override
                     public Object handle(Request request, Response response) throws Exception {
                         response.redirect("app.html");
@@ -64,21 +42,21 @@ public class SparkStarter {
                     }
                 });
 
-                get(new Route("/hello") {
+                Spark.get(new Route("/hello") {
                     @Override
                     public Object handle(Request request, Response response) {
                         return "Hello World!";
                     }
                 });
 
-                post(new Route("/hello") {
+                Spark.post(new Route("/hello") {
                     @Override
                     public Object handle(Request request, Response response) {
                         return "Hello World: " + request.body();
                     }
                 });
 
-                get(new Route("/private") {
+                Spark.get(new Route("/private") {
                     @Override
                     public Object handle(Request request, Response response) {
                         response.status(401);
@@ -86,14 +64,14 @@ public class SparkStarter {
                     }
                 });
 
-                get(new Route("/users/:name") {
+                Spark.get(new Route("/users/:name") {
                     @Override
                     public Object handle(Request request, Response response) {
                         return "Selected user: " + request.params(":name");
                     }
                 });
 
-                get(new Route("/news/:section") {
+                Spark.get(new Route("/news/:section") {
                     @Override
                     public Object handle(Request request, Response response) {
                         response.type("text/xml");
@@ -101,7 +79,7 @@ public class SparkStarter {
                     }
                 });
 
-                get(new Route("/protected") {
+                Spark.get(new Route("/protected") {
                     @Override
                     public Object handle(Request request, Response response) {
                         halt(403, "I don't think so!!!");
@@ -109,7 +87,7 @@ public class SparkStarter {
                     }
                 });
 
-                get(new Route("/redirect") {
+                Spark.get(new Route("/redirect") {
                     @Override
                     public Object handle(Request request, Response response) {
                         response.redirect("/news/world");
@@ -121,10 +99,21 @@ public class SparkStarter {
         };
     }
 
+    public void stop() {
+        Spark.stop();
+        mStarted = false;
+    }
+
     public void start() {
+        if (!mStarted) {
+            new Thread(getHandler()).start();
+            mStarted = true;
+        } else
+            Log.e(TAG, "start: server already started");
+    }
 
-        new Thread(getHandler()).start();
-
+    private static class SingletonHolder {
+        private static final SparkStarter INSTANCE = new SparkStarter();
     }
 
 }

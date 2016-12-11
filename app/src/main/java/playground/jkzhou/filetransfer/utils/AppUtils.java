@@ -9,6 +9,8 @@ import org.apache.commons.io.FileUtils;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 
 import static android.content.Context.WIFI_SERVICE;
@@ -66,22 +68,34 @@ public class AppUtils {
         return cache.getPath();
     }
 
-    public static void listAssets(Context context, String path) {
-        listAssets(context.getAssets(), path);
+    public static List<String> scanAssets(Context context, String path) {
+        List<String> list = new ArrayList<>();
+
+        getAssetsPaths(context.getAssets(), path, list);
+
+        return list;
     }
 
-    private static void listAssets(AssetManager asMgr, String path) {
+    private static void getAssetsPaths(AssetManager asMgr, String path, List<String> list) {
         String[] paths;
+
         try {
             paths = asMgr.list(path);
         } catch (IOException e) {
-            Log.e(TAG, "listAssets: cannot access path " + path, e);
+            Log.e(TAG, "getAssetsList: Failed to access path " + path, e);
             return;
         }
-        for (String p : paths) {
-            Log.d(TAG, "listAssets: " + path + File.separator + p);
-            listAssets(asMgr, path + File.separator + p);
+
+        if (paths.length == 0) {
+            /* current path is a file */
+            if (path != null && !path.isEmpty()) list.add(path);
+        } else {
+            /* current path is a dir */
+            for (String p : paths) {
+                getAssetsPaths(asMgr, path + File.separator + p, list);
+            }
         }
+
     }
 
     public static boolean copyAssets(Context context, String src, String dest) {
@@ -117,6 +131,14 @@ public class AppUtils {
         }
 
         return success;
+    }
+
+    public static void copyFile(Context context, String from, String to) {
+        try {
+            doCopyFile(context.getAssets(), from, to);
+        } catch (IOException e) {
+            Log.e(TAG, "copyFile: Copy " + from + " to " + to + " Failed", e);
+        }
     }
 
     private static void doCopyFile(AssetManager asMgr, String from, String to) throws IOException {

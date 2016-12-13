@@ -24,7 +24,6 @@ import spark.Spark;
 public class WebManager {
 	public static final String WEB_BASE_DIR = "WebContent";
 	private static final String TAG = "WebManager";
-	private static final String URL_BASE_ROUTE = "/";
 	private static final String URL_TEST_ROUTE = "/test";
 
 	private static String staticFilesPath;
@@ -36,7 +35,6 @@ public class WebManager {
 
 	/* Hide default constructor, use getInstance instead */
 	private WebManager() {
-		addRoute(createBaseRoute());
 		addRoute(createTestRoute());
 	}
 
@@ -101,16 +99,6 @@ public class WebManager {
 		Spark.stop();
 		activeRoutesMap.clear();
 		started = false;
-	}
-
-	private RouteHandler createBaseRoute() {
-		return new RouteHandler(RequestType.GET, URL_BASE_ROUTE) {
-			@Override
-			public Object handle(Request request, Response response) {
-				response.redirect("app.html");
-				return null;
-			}
-		};
 	}
 
 	private RouteHandler createTestRoute() {

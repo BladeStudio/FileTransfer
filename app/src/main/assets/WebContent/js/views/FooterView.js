@@ -15,29 +15,19 @@
  */
 
 define([
-    'jquery',
-	'jqm',
-    'underscore',
-    'backbone',
-	'router',
-], function($, jqm, _, Backbone, AppRouter) {
+    'backbone'
+], function(Backbone) {
 
-    var applyStyles = function () {
-        $('a.app-btn').addClass("ui-btn ui-corner-all ui-shadow");
-    };
+    var FooterView = Backbone.View.extend({
 
-    return {
-        initialize: function() {
-            // Prevents all anchor click handling
-            $.mobile.linkBindingEnabled = false;
+        el: $("#appFooter"),
 
-            // Disabling this will prevent jQuery Mobile from handling hash changes
-            $.mobile.hashListeningEnabled = false;
+        render: function() {
+            this.$el.html("<h3>FooterText</h3>");
+        }
 
-            // Pass in our Router module and call it's initialize function
-    		AppRouter.initialize();
-            console.log("Dependencies loaded");
-            applyStyles();
-        },
-    };
+    });
+
+    return FooterView;
+
 });

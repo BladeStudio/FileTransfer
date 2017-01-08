@@ -19,8 +19,10 @@ define([
   'underscore',
   'backbone',
   'models/BaseModel',
+  'views/HeaderView',
+  'views/FooterView',
   'views/MainView'
-], function($, _, Backbone, BaseModel, MainView) {
+], function($, _, Backbone, BaseModel, HeaderView, FooterView, MainView) {
 
   var AppRouter = Backbone.Router.extend({
     routes: {
@@ -36,10 +38,18 @@ define([
     var app_router = new AppRouter;
 
     app_router.on('route:defaultAction', function (actions) {
+        /* We have no matching route, lets display the home page */
 
-       // We have no matching route, lets display the home page
+        /* Display page header */
+        var headerView = new HeaderView(new BaseModel());
+        headerView.render();
+
+        /* Display main content */
         var mainView = new MainView(new BaseModel());
         mainView.render();
+
+        var footerView = new FooterView(new BaseModel());
+        footerView.render();
     });
 
     Backbone.history.start();

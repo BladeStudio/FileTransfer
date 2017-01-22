@@ -1,7 +1,10 @@
 package playground.jkzhou.filetransfer;
 
+import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.Context;
+import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.CoordinatorLayout;
@@ -9,6 +12,7 @@ import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.NavigationView;
 import android.support.design.widget.Snackbar;
 import android.support.v4.content.ContextCompat;
+import android.support.v4.provider.DocumentFile;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
@@ -37,6 +41,7 @@ public class MainActivity extends AppCompatActivity
 		implements NavigationView.OnNavigationItemSelectedListener {
 
 	private static final String TAG = "MainActivity";
+	private static final int READ_REQ_CODE = 42;
 	private ProgressUIController progressControl;
 	private CoordinatorLayout topLayout;
 	private UIMessageHandler uiMsgHandler = new UIMessageHandler();
@@ -83,7 +88,7 @@ public class MainActivity extends AppCompatActivity
 		if (id == R.id.nav_camera) {
 			// Handle the camera action
 		} else if (id == R.id.nav_gallery) {
-
+			pickImage();
 		} else if (id == R.id.nav_slideshow) {
 
 		} else if (id == R.id.nav_manage) {
@@ -214,6 +219,44 @@ public class MainActivity extends AppCompatActivity
 							showServerStatus(true);
 						}
 					}).show();
+		}
+	}
+
+	private void pickImage() {
+		// Open a file via system file browser
+		Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+
+		// Only show results that are openable, e.g. files
+		intent.addCategory(Intent.CATEGORY_OPENABLE);
+
+		// Add more specific filter, shows images only
+		intent.setType("*/*");
+
+		startActivityForResult(intent, READ_REQ_CODE);
+	}
+
+	@Override
+	public void onActivityResult(int reqCode, int resultCode, Intent result) {
+		if (READ_REQ_CODE == reqCode && Activity.RESULT_OK == resultCode) {
+			if (result != null) {
+				Uri uri = result.getData();
+				DocumentFile doc = DocumentFile.fromSingleUri(this, uri);
+				String info = "\n==================== URI ====================";
+				info += "\nUri = " + uri;
+				info += "\nAuthority: " + uri.getAuthority();
+				info += "\nPath: " + uri.getPath();
+				info += "\nQuery: " + uri.getQuery();
+				info += "\n==================== Doc File ====================";
+				info += "\nName: " + doc.getName();
+				info += "\nType: " + doc.getType();
+				info += "\nexists: " + doc.exists();
+				info += "\nisFile: " + doc.isFile();
+				info += "\ncanRead: " + doc.canRead();
+				info += "\ncanWrite: " + doc.canWrite();
+				info += "\nlength: " + doc.length();
+
+				Log.i(TAG, "onActivityResult: selected:\n" + info);
+			}
 		}
 	}
 

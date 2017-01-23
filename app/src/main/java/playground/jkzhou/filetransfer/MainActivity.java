@@ -2,6 +2,7 @@ package playground.jkzhou.filetransfer;
 
 import android.app.Activity;
 import android.app.ProgressDialog;
+import android.content.ClipData;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
@@ -12,7 +13,6 @@ import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.NavigationView;
 import android.support.design.widget.Snackbar;
 import android.support.v4.content.ContextCompat;
-import android.support.v4.provider.DocumentFile;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
@@ -23,13 +23,19 @@ import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.List;
 
+import playground.jkzhou.filetransfer.controller.FileListAdapter;
 import playground.jkzhou.filetransfer.controller.ProgressUIController;
+import playground.jkzhou.filetransfer.files.ContentManager;
+import playground.jkzhou.filetransfer.files.IPublisher;
+import playground.jkzhou.filetransfer.files.ISubscriber;
 import playground.jkzhou.filetransfer.message.MessageReceiver;
 import playground.jkzhou.filetransfer.message.handler.UIMessageHandler;
 import playground.jkzhou.filetransfer.utils.AppUtils;
@@ -40,12 +46,34 @@ import playground.jkzhou.filetransfer.web.handler.FileRequestHandler;
 public class MainActivity extends AppCompatActivity
 		implements NavigationView.OnNavigationItemSelectedListener {
 
-	private static final String TAG = "MainActivity";
 	private static final int READ_REQ_CODE = 42;
+	private static final String TAG = "MainActivity";
 	private ProgressUIController progressControl;
 	private CoordinatorLayout topLayout;
 	private UIMessageHandler uiMsgHandler = new UIMessageHandler();
+	private IPublisher<Uri> uriPublisher;
 	private WebManager webMgr;
+	private FileListAdapter listAdapter;
+
+	@Override
+	public void onActivityResult(int reqCode, int resultCode, Intent result) {
+		if (READ_REQ_CODE == reqCode && Activity.RESULT_OK == resultCode) {
+			if (result != null) {
+				ClipData selections = result.getClipData();
+				Uri selectedUri = result.getData();
+				if (selections != null) {
+					for (int i = 0; i < selections.getItemCount(); i++) {
+						ClipData.Item item = selections.getItemAt(i);
+						uriPublisher.publish(item.getUri());
+					}
+				} else if (selectedUri != null) {
+					uriPublisher.publish(selectedUri);
+				} else {
+					Log.d(TAG, "onActivityResult: 0 selection");
+				}
+			}
+		}
+	}
 
 	@Override
 	public void onBackPressed() {
@@ -107,14 +135,50 @@ public class MainActivity extends AppCompatActivity
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+
+		initUI();
+		initWebManager();
+		initPublisher();
+	}
+
+	@Override
+	protected void onDestroy() {
+		super.onDestroy();
+		webMgr.stopServer();
+		AppUtils.trimCache(this);
+	}
+
+	private void initPublisher() {
+		uriPublisher = new ContentManager(this);
+		uriPublisher.addSubscriber(new ISubscriber() {
+			@Override
+			public void notifyUpdate() {
+				MainActivity.this.runOnUiThread(new Runnable() {
+					@Override
+					public void run() {
+						List<Uri> updated = uriPublisher.get();
+						Log.d(TAG, "notifyUpdate: published: " + updated);
+						listAdapter.refresh(updated);
+					}
+				});
+			}
+		});
+	}
+
+	private void initUI() {
 		setContentView(R.layout.activity_main);
 
+		/* Config progress bar */
 		this.progressControl = new ProgressUIController(new ProgressDialog(this));
+
+		/* Config status bar */
 		this.topLayout = (CoordinatorLayout) findViewById(R.id.coordinatorLayout);
 
+		/* Config tool bar */
 		Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
 		setSupportActionBar(toolbar);
 
+		/* Config Fab button */
 		FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
 		fab.setOnClickListener(new View.OnClickListener() {
 			@Override
@@ -128,24 +192,22 @@ public class MainActivity extends AppCompatActivity
 		});
 		fab.setEnabled(true);
 
+		/* Config drawer */
 		DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
 		ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
 				this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
 		drawer.addDrawerListener(toggle);
 		toggle.syncState();
 
+		/* Config navigation view */
 		NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
 		navigationView.setNavigationItemSelectedListener(this);
 
-		initWebManager();
-		showServerStatus(false);
-	}
+		ListView fileListView = (ListView) findViewById(R.id.list_view_main);
+		listAdapter = new FileListAdapter(this, R.layout.file_list_item, new ArrayList<Uri>());
+		fileListView.setAdapter(listAdapter);
 
-	@Override
-	protected void onDestroy() {
-		super.onDestroy();
-		webMgr.stopServer();
-		AppUtils.trimCache(this);
+		showServerStatus(false);
 	}
 
 	private void initWebManager() {
@@ -189,6 +251,22 @@ public class MainActivity extends AppCompatActivity
 		}).start();
 	}
 
+	private void pickImage() {
+		// Open a file via system file browser
+		Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+
+		// Only show results that are openable, e.g. files
+		intent.addCategory(Intent.CATEGORY_OPENABLE);
+
+		// Allow multiple selections
+		intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
+
+		// Add more specific filter, shows images only
+		intent.setType("*/*");
+
+		startActivityForResult(intent, READ_REQ_CODE);
+	}
+
 	private void showServerStatus(boolean isOn) {
 		final Snackbar bar = Snackbar.make(topLayout, "", Snackbar.LENGTH_INDEFINITE);
 
@@ -219,44 +297,6 @@ public class MainActivity extends AppCompatActivity
 							showServerStatus(true);
 						}
 					}).show();
-		}
-	}
-
-	private void pickImage() {
-		// Open a file via system file browser
-		Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
-
-		// Only show results that are openable, e.g. files
-		intent.addCategory(Intent.CATEGORY_OPENABLE);
-
-		// Add more specific filter, shows images only
-		intent.setType("*/*");
-
-		startActivityForResult(intent, READ_REQ_CODE);
-	}
-
-	@Override
-	public void onActivityResult(int reqCode, int resultCode, Intent result) {
-		if (READ_REQ_CODE == reqCode && Activity.RESULT_OK == resultCode) {
-			if (result != null) {
-				Uri uri = result.getData();
-				DocumentFile doc = DocumentFile.fromSingleUri(this, uri);
-				String info = "\n==================== URI ====================";
-				info += "\nUri = " + uri;
-				info += "\nAuthority: " + uri.getAuthority();
-				info += "\nPath: " + uri.getPath();
-				info += "\nQuery: " + uri.getQuery();
-				info += "\n==================== Doc File ====================";
-				info += "\nName: " + doc.getName();
-				info += "\nType: " + doc.getType();
-				info += "\nexists: " + doc.exists();
-				info += "\nisFile: " + doc.isFile();
-				info += "\ncanRead: " + doc.canRead();
-				info += "\ncanWrite: " + doc.canWrite();
-				info += "\nlength: " + doc.length();
-
-				Log.i(TAG, "onActivityResult: selected:\n" + info);
-			}
 		}
 	}
 
